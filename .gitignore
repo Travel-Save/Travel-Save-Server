@@ -1,0 +1,63 @@
+### Maven ###
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+**# 추가된 Maven 관련 항목들**
+**\*.log**
+**\*.jar**
+**\*.war**
+**\*.ear**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+\*.iws
+\*.iml
+\*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Miscellaneous ###
+HELP.md
+**# 추가된 일반 파일 및 디렉토리 항목들**
+**.DS_Store**
+**/bin/**
+**/node_modules/**
+**\*.swp**
+**\*~.nib**
+
+### OS generated files ###
+**# 추가된 OS 생성 파일**
+**Thumbs.db**
+**ehthumbs.db**
+**Icon?**
+**\*.Trashes**
+
+### Project specific ###
+**# 변경된 프로젝트 특정 파일**
+**\*.properties**
+# 제거: 예외 처리
+# !src/main/resources/application.properties
+
+# 추가: 중요 구성 파일 무시
+src/main/resources/application.properties
+src/main/resources/application-*.properties

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.travel.board.model.mapper.BoardMapper">
+	<resultMap type="boardDto" id="article">
+		<result column="id" property="id"/>
+		<result column="user_id" property="userId"/>
+		<result column="user_name" property="userName"/>
+		<result column="type" property="type"/>
+		<result column="title" property="title"/>
+		<result column="content" property="content"/>
+		<result column="content2" property="content2"/>
+		<result column="thumbnail" property="thumbnail"/>
+		<result column="view_count" property="viewCount"/>
+		<result column="like_count" property="likeCount"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="mod_date" property="modDate"/>
+		<result column="status" property="status"/>
+	</resultMap>
+		
+	<resultMap type="fileInfoDto" id="file">
+		<result column="save_folder" property="saveFolder"/>
+		<result column="original_file" property="originalFile"/>
+		<result column="save_file" property="saveFile"/>
+	</resultMap>
+
+	<insert id="writeArticle" parameterType="boardDto" useGeneratedKeys="true" keyProperty="id">
+		insert into tb_board (user_id, title, content,content2, type, thumbnail)
+		values (#{userId}, #{title}, #{content}, #{content2},#{type}, #{thumbnail})
+	</insert>
+	
+	<insert id="uploadFile" parameterType="fileInfoDto">
+		insert into tb_file_info (board_id, save_folder, original_file, save_file)
+		values
+		<foreach collection="files" item="file" separator=" , ">
+			(#{file.boardId}, #{file.saveFolder}, #{file.originalFile}, #{file.saveFile})
+		</foreach>
+	</insert>
+
+	<sql id="search">
+		<if test="word != null and word != ''">
+			<if test="key == 'b.title'">
+				and title like concat('%', #{word}, '%')
+			</if>
+			<if test="key == 'u.name'">
+				and u.name like concat('%', #{word}, '%')
+			</if>
+			<if test="key != 'b.title' and key != 'u.name'">
+				and ${key} = #{word}
+			</if>
+		</if>
+	</sql>
+
+	<select id="listArticle" parameterType="map" resultMap="article">
+		select b.*, u.name user_name,
+			(select count(f.id) from tb_favorite f where f.board_id = b.id) like_count
+		from tb_board b 
+			inner join tb_user u on b.user_id = u.id
+		<where>
+			<if test="type != null and type != ''">b.type = #{type}</if>
+			<include refid="search"></include>
+			and b.status = 1
+		</where>
+		order by
+		<if test="sort != null and sort != ''">#{sort} desc</if>
+		b.id desc
+		limit #{start}, #{listsize}
+	</select>
+	
+	<select id="getTotalArticleCount" parameterType="map" resultType="int">
+		select count(b.id)
+		from tb_board b
+			inner join tb_user u on b.user_id = u.id
+		<where>
+			<if test="type != null and type != ''">b.type = #{type}</if>
+			<include refid="search"></include>
+			<if test="userId != null and userId != ''">
+	            AND b.id in (select board_id from tb_favorite where user_id = #{userId})
+	        </if>
+		</where>
+	</select>
+	
+	<select id="getArticle" parameterType="int" resultMap="article">
+		select b.*, u.name user_name, 
+			(select count(f.id) from tb_favorite f where f.board_id = b.id) like_count
+		from tb_board b
+			inner join tb_user u on b.user_id = u.id
+		where b.id = #{id}
+	</select>
+	
+	<select id="getFiles" parameterType="int" resultMap="file">
+		select save_folder, original_file, save_file
+		from tb_file_info
+		where board_id = #{id}
+	</select>
+	
+	<update id="updateHit" parameterType="int">
+		update tb_board
+		set view_count = view_count + 1
+		where id = #{id}
+	</update>
+	
+	<update id="modifyArticle" parameterType="boardDto">
+		update tb_board
+		set title = #{title}, content = #{content}, content2 = #{content2}
+		<if test="thumbnail != null and thumbnail != ''">
+	        ,thumbnail = #{thumbnail}
+	    </if>
+		where id = #{id}
+	</update>
+	
+	<delete id="deleteFile" parameterType="int">
+		delete from file_info
+		where id = #{articleNo}
+	</delete>
+	
+	<delete id="deleteArticle" parameterType="int">
+		delete from tb_board
+		where id = #{articleNo}
+	</delete>
+	
+	<insert id="insertFavorite" parameterType="map">
+		insert into tb_favorite (user_id, board_id)
+		values (#{userId}, #{boardId})
+	</insert>
+
+	<select id="getFavorite" parameterType="map" resultType="com.travel.board.model.BoardFavoriteDto">
+		select 
+			count(*) as likeCount
+			<if test="userId != null and userId != ''">
+			  , (select COALESCE(MAX(id), 0) from tb_favorite where f.board_id = board_id and user_id = #{userId}) as isLike
+			</if>
+		from tb_favorite f
+		where board_id = #{boardId}
+	</select>
+	
+	<delete id="deleteFavorite" parameterType="map" >
+		delete from tb_favorite
+		where id = #{favoriteId} and board_id = #{boardId} and user_id = #{userId}
+	</delete>
+	
+	<select id="listLikeArticle" parameterType="map" resultMap="article">
+	    select b.*, u.name as user_name, 
+	        (select count(*) from tb_favorite where board_id = b.id) as like_count
+	    from tb_board b 
+	    inner join tb_user u on b.user_id = u.id
+	    <where>
+	        b.status = 1
+	        <include refid="search"></include>
+	        <if test="type != null and type != ''">
+	            AND b.type = #{type}
+	        </if>
+	        <if test="userId != null and userId != ''">
+	            AND b.id in (select board_id from tb_favorite where user_id = #{userId})
+	        </if>
+	    </where>
+	    order by like_count desc, b.id desc
+	    limit #{start}, #{listsize}
+	</select>
+
+
+
+
+	<select id="getThumbnail" parameterType="map" resultType="boardThumbnailDto">
+		select COALESCE(f.save_file, '') AS save_file,  COALESCE(f.save_folder, '') AS save_folder
+		from tb_file_info f join tb_board b on f.board_id = b.id
+		where f.original_file = #{thumbnail} and b.id = #{id};
+	</select>
+</mapper>

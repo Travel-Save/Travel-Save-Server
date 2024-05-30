@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.travel.user.model.mapper.UserMapper">
+
+	<resultMap type="userDto" id="user">
+		<result column="id" property="id"/>
+		<result column="login_id" property="loginId"/>
+		<result column="password" property="password"/>
+		<result column="name" property="name"/>
+		<result column="type" property="type"/>
+		<result column="phone" property="phone"/>
+		<result column="email" property="email"/>
+		<result column="zipcode" property="zipcode"/>
+		<result column="addr" property="addr"/>
+		<result column="addr2" property="addr2"/>
+		<result column="agree_yn" property="agreeYn"/>
+		<result column="reg_date" property="regDate"/>
+		<result column="mod_date" property="modDate"/>
+		<result column="status" property="status"/>
+		<result column="profile" property="profile"/>
+		
+		<result column="token" property="refreshToken"/>
+	</resultMap>
+
+	<select id="login" parameterType="map" resultMap="user">
+		select id, login_id, name, token
+		from tb_user
+		<where>
+			login_id = #{loginId} and password = #{password}
+			AND status = 1
+		</where>
+	</select>
+	
+	<insert id="join" parameterType="userDto">
+	    insert into tb_user
+	    <trim prefix="(" suffix=")" suffixOverrides=",">
+	        login_id,
+	        password,
+	        name,
+	        phone,
+	        agree_yn,
+	        <if test="email != null and email != ''">email,</if>
+	        <if test="addr != null and addr != ''">addr,</if>
+	        <if test="addr2 != null and addr2 != ''">addr2,</if>
+	        <if test="zipcode != null and zipcode != ''">zipcode,</if>
+	    </trim>
+	    <trim prefix="values (" suffix=")" suffixOverrides=",">
+	        #{loginId},
+	        #{password},
+	        #{name},
+	        #{phone},
+	        'Y',
+	        <if test="email != null and email != ''">#{email},</if>
+	        <if test="addr != null and addr != ''">#{addr},</if>
+	        <if test="addr2 != null and addr2 != ''">#{addr2},</if>
+	        <if test="zipcode != null and zipcode != ''">#{zipcode},</if>
+	    </trim>
+	</insert>
+
+	
+	<update id="update" parameterType="userDto">
+	    update tb_user 
+	    <trim prefix="set" suffixOverrides=",">
+	    mod_date = now(),
+	    <if test="password != null ">password = #{password},</if>
+	    <if test="name != null ">name = #{name},</if>
+	    <if test="phone != null ">phone = #{phone},</if>
+	    <if test="email != null">email = #{email},</if>
+	    <if test="zipcode != null">zipcode = #{zipcode},</if>
+	    <if test="addr != null ">addr = #{addr},</if>
+	    <if test="addr2 != null ">addr2 = #{addr2},</if>
+	    <if test="profile != null ">profile = #{profile},</if>
+		
+	    </trim>
+	    <where>
+	        login_id = #{loginId}
+	    </where>
+	</update>
+	
+	<update id="findPw">
+	 	update tb_user 
+	    <trim prefix="set" suffixOverrides=",">
+		    mod_date = now(),
+		    <if test="password != null and password != ''">password = #{password},</if>
+	    </trim>
+	    <where>
+	        login_id = #{loginId} AND phone = #{phone}
+	    </where>
+	</update>
+		
+	<select id="userInfo" parameterType="string" resultMap="user">
+		select *
+		from tb_user
+		where login_id = #{loginId}
+	</select>
+	
+	<update id="saveRefreshToken" parameterType="map">
+		update tb_user
+		set token = #{token}
+		where login_id = #{loginId}
+	</update>
+	
+	<update id="delete" parameterType="string">
+		update tb_user
+		<trim prefix="set" suffixOverrides=",">
+			 status = -1,
+			 mod_date = now()
+		</trim>
+		 <where>
+		 	login_id = #{loginId}
+		 </where>
+	</update>
+	
+	<select id="getRefreshToken" parameterType="string" resultType="string">
+		select token
+		from tb_user
+		where login_id = #{loginId}
+	</select>
+	
+	<update id="deleteRefreshToken" parameterType="map">
+		update tb_user
+		set token = #{token, jdbcType=VARCHAR}
+		where login_id = #{loginId}
+	</update>
+	
+</mapper>

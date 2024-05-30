@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.travel.savingProduct.model.mapper.SavingProductMapper">
+
+    <select id="searchSavingProduct" parameterType="map" resultType="savingProductDto">
+        select *
+        from tb_saving_product
+        where ((<![CDATA[ max_limit <= #{totalPrice} ]]>) OR max_limit is null) and (<![CDATA[ save_trm <= TIMESTAMPDIFF(MONTH,#{now},#{startDate}) ]]>)
+        order by intr_rate2 desc
+    </select>
+
+</mapper>
